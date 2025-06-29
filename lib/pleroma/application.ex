@@ -61,6 +61,36 @@ defmodule Pleroma.Application do
     Pleroma.Docs.JSON.compile()
     limiters_setup()
 
+
+    # Start OpenTelemetry changes.
+
+    # OpentelemetryPhoenix.setup():
+    # This ensures that OpenTelemetry spans are automatically created for incoming Phoenix requests.
+    # This is crucial for getting the initial tracing context from HTTP headers.
+    #
+    # OpentelemetryEcto.setup():
+    # This sets up automatic instrumentation for Ecto queries, creating child spans for database operations.
+    # While opentelemetry_sqlcommenter handles the injection of trace context into the SQL comments, OpentelemetryEcto
+    # is responsible for creating the Ecto-related spans that contain that context in the first place. They work hand-in-hand.
+
+    # Due to unfamiliarity with Elixir, an LLM was consulted, and it said no need to set up cowboy manually.
+    #OpenTelemetry.register_application_tracer(:Pleroma)
+    #:opentelemetry_cowboy.setup()
+    #OpentelemetryPhoenix.setup(adapter: :cowboy2)
+
+    # This worked fine.
+    OpentelemetryPhoenix.setup()
+    OpentelemetryEcto.setup([:pleroma, :repo])
+
+    # It seems Elixir < 15 can't quite just load logger stuff directly.
+    logger_formatter_config = Application.get_env(:foo, :logger_formatter_config)
+
+    if logger_formatter_config do
+      :logger.update_handler_config(:default, :formatter, logger_formatter_config)
+    end
+
+    # End OpenTelemetry changes.
+
     adapter = Application.get_env(:tesla, :adapter)
 
     if match?({Tesla.Adapter.Finch, _}, adapter) do
