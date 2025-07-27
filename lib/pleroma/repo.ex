@@ -92,4 +92,9 @@ defmodule Pleroma.Repo do
       fn _ -> :ok end
     )
   end
+
+  # Use sqlcommenter for opentelemetry_sqlcommenter support, so tracing can propagate.
+  # From readme for opentelemetry_sqlcommenter 0.1.1: https://github.com/dkuku/opentelemetry_sqlcommenter
+  defdelegate prepare_query(operation, query, opts), to: OpentelemetrySqlcommenter
+
 end

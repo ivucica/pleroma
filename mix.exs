@@ -36,7 +36,7 @@ defmodule Pleroma.Mixfile do
       releases: [
         pleroma: [
           include_executables_for: [:unix],
-          applications: [ex_syslogger: :load, syslog: :load, eldap: :transient],
+          applications: [ex_syslogger: :load, syslog: :load, eldap: :transient, opentelemetry_exporter: :permanent, opentelemetry: :temporary],
           steps: [:assemble, &put_otp_version/1, &copy_files/1, &copy_nginx_config/1],
           config_providers: [{Pleroma.Config.ReleaseRuntimeProvider, []}]
         ]
@@ -208,10 +208,73 @@ defmodule Pleroma.Mixfile do
       {:multipart, "~> 0.4.0", optional: true},
       {:argon2_elixir, "~> 4.0"},
 
+
+    # opentelemetry_api: contains the interfaces you’ll use to instrument your code. Things like Tracer.with_span and Tracer.set_attribute are defined here.
+    # opentelemetry: contains the SDK that implements the interfaces defined in the API. Without it, all the functions in the API are no-ops.
+    # opentelemetry_exporter: allows you to send your telemetry data to an OpenTelemetry Collector and/or to self-hosted or commercial services.
+    # opentelemetry_phoenix: creates OpenTelemetry spans from the Elixir :telemetry events created by Phoenix.
+    # opentelemetry_cowboy: creates OpenTelemetry spans from the Elixir :telemetry events created by the Cowboy web server, which is used by Phoenix.
+
+    {:opentelemetry_exporter, "~> 1.8.0"}, # has to come before other deps https://github.com/open-telemetry/opentelemetry-erlang/issues/419
+    {:opentelemetry, "~> 1.5.0"},
+    {:opentelemetry_api, "~> 1.4.0"},
+    {:opentelemetry_ecto, "~> 1.2.0"},
+    {:opentelemetry_phoenix, "~> 1.2.0"},
+    #{:opentelemetry_instrumentation_oban, "~> 0.1"},
+    #{:opentelemetry_instrumentation_http, "~> 0.1"},
+    #{:opentelemetry_instrumentation_ecto, "~> 0.1"},
+    #{:opentelemetry_instrumentation_phoenix, "~> 0.1"},
+    {:otel_http, "~> 0.2.0"},
+    {:opentelemetry_oban, "~> 1.1"},
+    {:opentelemetry_telemetry, "~> 1.1"},
+    #{:tracing, "~> 0.2.2"},
+    {:opentelemetry_cowboy, "~> 0.2.1"},  # trace webserver used by phoenix
+    {:telemetry_registry, "~> 0.3.1"},  # seemingly not declared as dependency but needed by something
+
+    {:logger_formatter_json, "~> 0.8"},
+    #{:logger_backends_json, "~> 0.5.0"},
+    {:logger_json, "~> 7.0"},
+
+    # intercept queries, see if there's an active trace context, add it as a comment so pg_tracing can use it.
+    {:opentelemetry_sqlcommenter, "~> 0.1.1"},
+
+    # Some errors:
+    # 1)
+    # """
+    # Because the lock specifies postgrex 0.17.5 and opentelemetry_sqlcommenter >= 0.1.1 depends on postgrex ~> 0.19.3, the lock is incompatible with opentelemetry_sqlcommenter >= 0.1.1.
+    # And because your app depends on the lock, opentelemetry_sqlcommenter >= 0.1.1 is forbidden.
+    # So, because your app depends on opentelemetry_sqlcommenter ~> 0.1.1, version solving failed.
+    # """
+    # fix: removed postgrex from lock, regenerated.
+    #
+    # 2)
+    # """
+    # Because the lock depends on ecto_psql_extras 0.7.15 which depends on postgrex ~> 0.16.0 or ~> 0.17.0, the lock requires postgrex ~> 0.16.0 or ~> 0.17.0.
+    # And because opentelemetry_sqlcommenter >= 0.1.1 depends on postgrex ~> 0.19.3, the lock is incompatible with opentelemetry_sqlcommenter >= 0.1.1.
+    # And because your app depends on the lock, opentelemetry_sqlcommenter >= 0.1.1 is forbidden.
+    # So, because your app depends on opentelemetry_sqlcommenter ~> 0.1.1, version solving failed.
+    # """
+    # fix: remove ecto_psql_extras from lock
+    #
+    #
+    # Upgraded:
+    #   earmark_parser 1.4.39 => 1.4.44
+    #   ex_doc 0.35.1 => 0.38.2 (minor)
+    #   makeup_erlang 0.1.3 => 1.0.2 (major)
+    #   opentelemetry_sqlcommenter 0.1.0 => 0.1.1
+    # New:
+    #   ecto_psql_extras 0.8.8
+    #   postgrex 0.19.3
+
+    # " warning: the dependency :ex_doc requires Elixir "~> 1.15" but you are running on v1.14.0"
+    # " warning: the dependency :opentelemetry_sqlcommenter requires Elixir "~> 1.15" but you are running on v1.14.0"
+    # No workaround.
+
+
       ## dev & test
       {:phoenix_live_reload, "~> 1.3.3", only: :dev},
       {:poison, "~> 3.0", only: :test},
-      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.35"}, ## <-- no longer dev only, sqlcommenter wants 0.35+ and at runtime (also we got 0.38.2 after ecto_sql_extras and postgrex upgrade)
       {:ex_machina, "~> 2.4", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:mock, "~> 0.3.5", only: :test},
