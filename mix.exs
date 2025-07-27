@@ -220,17 +220,56 @@ defmodule Pleroma.Mixfile do
     {:opentelemetry_api, "~> 1.4.0"},
     {:opentelemetry_ecto, "~> 1.2.0"},
     {:opentelemetry_phoenix, "~> 1.2.0"},
+    #{:opentelemetry_instrumentation_oban, "~> 0.1"},
+    #{:opentelemetry_instrumentation_http, "~> 0.1"},
+    #{:opentelemetry_instrumentation_ecto, "~> 0.1"},
+    #{:opentelemetry_instrumentation_phoenix, "~> 0.1"},
     {:otel_http, "~> 0.2.0"},
     {:opentelemetry_oban, "~> 1.1"},
     {:opentelemetry_telemetry, "~> 1.1"},
+    #{:tracing, "~> 0.2.2"},
     {:opentelemetry_cowboy, "~> 0.2.1"},  # trace webserver used by phoenix
     {:telemetry_registry, "~> 0.3.1"},  # seemingly not declared as dependency but needed by something
 
     {:logger_formatter_json, "~> 0.8"},
+    #{:logger_backends_json, "~> 0.5.0"},
     {:logger_json, "~> 7.0"},
 
     # intercept queries, see if there's an active trace context, add it as a comment so pg_tracing can use it.
     {:opentelemetry_sqlcommenter, "~> 0.1.1"},
+
+    # Some errors:
+    # 1)
+    # """
+    # Because the lock specifies postgrex 0.17.5 and opentelemetry_sqlcommenter >= 0.1.1 depends on postgrex ~> 0.19.3, the lock is incompatible with opentelemetry_sqlcommenter >= 0.1.1.
+    # And because your app depends on the lock, opentelemetry_sqlcommenter >= 0.1.1 is forbidden.
+    # So, because your app depends on opentelemetry_sqlcommenter ~> 0.1.1, version solving failed.
+    # """
+    # fix: removed postgrex from lock, regenerated.
+    #
+    # 2)
+    # """
+    # Because the lock depends on ecto_psql_extras 0.7.15 which depends on postgrex ~> 0.16.0 or ~> 0.17.0, the lock requires postgrex ~> 0.16.0 or ~> 0.17.0.
+    # And because opentelemetry_sqlcommenter >= 0.1.1 depends on postgrex ~> 0.19.3, the lock is incompatible with opentelemetry_sqlcommenter >= 0.1.1.
+    # And because your app depends on the lock, opentelemetry_sqlcommenter >= 0.1.1 is forbidden.
+    # So, because your app depends on opentelemetry_sqlcommenter ~> 0.1.1, version solving failed.
+    # """
+    # fix: remove ecto_psql_extras from lock
+    #
+    #
+    # Upgraded:
+    #   earmark_parser 1.4.39 => 1.4.44
+    #   ex_doc 0.35.1 => 0.38.2 (minor)
+    #   makeup_erlang 0.1.3 => 1.0.2 (major)
+    #   opentelemetry_sqlcommenter 0.1.0 => 0.1.1
+    # New:
+    #   ecto_psql_extras 0.8.8
+    #   postgrex 0.19.3
+
+    # " warning: the dependency :ex_doc requires Elixir "~> 1.15" but you are running on v1.14.0"
+    # " warning: the dependency :opentelemetry_sqlcommenter requires Elixir "~> 1.15" but you are running on v1.14.0"
+    # No workaround.
+
 
       ## dev & test
       {:phoenix_live_reload, "~> 1.3.3", only: :dev},
