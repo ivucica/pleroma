@@ -209,11 +209,11 @@ defmodule Pleroma.Mixfile do
       {:argon2_elixir, "~> 4.0"},
 
 
-# opentelemetry_api: contains the interfaces you’ll use to instrument your code. Things like Tracer.with_span and Tracer.set_attribute are defined here.
-# opentelemetry: contains the SDK that implements the interfaces defined in the API. Without it, all the functions in the API are no-ops.
-# opentelemetry_exporter: allows you to send your telemetry data to an OpenTelemetry Collector and/or to self-hosted or commercial services.
-# opentelemetry_phoenix: creates OpenTelemetry spans from the Elixir :telemetry events created by Phoenix.
-# opentelemetry_cowboy: creates OpenTelemetry spans from the Elixir :telemetry events created by the Cowboy web server, which is used by Phoenix.
+    # opentelemetry_api: contains the interfaces you’ll use to instrument your code. Things like Tracer.with_span and Tracer.set_attribute are defined here.
+    # opentelemetry: contains the SDK that implements the interfaces defined in the API. Without it, all the functions in the API are no-ops.
+    # opentelemetry_exporter: allows you to send your telemetry data to an OpenTelemetry Collector and/or to self-hosted or commercial services.
+    # opentelemetry_phoenix: creates OpenTelemetry spans from the Elixir :telemetry events created by Phoenix.
+    # opentelemetry_cowboy: creates OpenTelemetry spans from the Elixir :telemetry events created by the Cowboy web server, which is used by Phoenix.
 
     {:opentelemetry_exporter, "~> 1.8.0"}, # has to come before other deps https://github.com/open-telemetry/opentelemetry-erlang/issues/419
     {:opentelemetry, "~> 1.5.0"},
